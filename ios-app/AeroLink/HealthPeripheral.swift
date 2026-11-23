@@ -7,7 +7,7 @@ final class HealthPeripheral: NSObject, CBPeripheralManagerDelegate {
     static let readingID = CBUUID(string: "A3C5E001-4C8A-4D1E-9B3A-2E7C0D91A610")
 
     private let onReading: (HealthReading, @escaping (Bool) -> Void) -> Void
-    private var manager: CBPeripheralManager!
+    private var manager: CBPeripheralManager?
     var onState: ((Bool, String) -> Void)?
     private var servicePublished = false
     private var serviceAdding = false
@@ -23,16 +23,16 @@ final class HealthPeripheral: NSObject, CBPeripheralManagerDelegate {
     init(onReading: @escaping (HealthReading, @escaping (Bool) -> Void) -> Void) {
         self.onReading = onReading
         super.init()
-        manager = CBPeripheralManager(delegate: self, queue: .main, options: [
-            CBPeripheralManagerOptionRestoreIdentifierKey: "app.aerolink.health-peripheral"
-        ])
+        // No restoration identifier: this receiver has no state-restoration delegate.
+        manager = CBPeripheralManager(delegate: self, queue: .main)
     }
 
     func start() {
-        guard manager.state == .poweredOn else {
-            onState?(false, "Turn on Bluetooth to start the watch receiver.")
+        guard let manager else {
+            onState?(false, "Bluetooth receiver could not be initialized.")
             return
         }
+        guard manager.state == .poweredOn else { return }
         guard !servicePublished, !serviceAdding else { return }
         let reading = CBMutableCharacteristic(
             type: Self.readingID,
@@ -47,8 +47,8 @@ final class HealthPeripheral: NSObject, CBPeripheralManagerDelegate {
     }
 
     func stop() {
-        manager.stopAdvertising()
-        manager.removeAllServices()
+        manager?.stopAdvertising()
+        manager?.removeAllServices()
         servicePublished = false
         serviceAdding = false
         assembly = nil
@@ -56,17 +56,26 @@ final class HealthPeripheral: NSObject, CBPeripheralManagerDelegate {
     }
 
     func peripheralManagerDidUpdateState(_ peripheral: CBPeripheralManager) {
-        if peripheral.state == .poweredOn {
+        switch peripheral.state {
+        case .poweredOn:
             start()
-        } else {
+        case .poweredOff:
+            onState?(false, "Turn on Bluetooth to start the watch receiver.")
+        case .unauthorized:
+            onState?(false, "Allow Bluetooth access for AeroLink in iPhone Settings.")
+        case .unsupported:
+            onState?(false, "This iPhone cannot act as a Bluetooth receiver.")
+        case .resetting, .unknown:
+            onState?(false, "Bluetooth is starting. Try again in a moment.")
+        @unknown default:
             onState?(false, "Bluetooth is unavailable. Check iPhone Bluetooth settings.")
         }
     }
 
     func peripheralManager(_ peripheral: CBPeripheralManager, didAdd service: CBService, error: Error?) {
         serviceAdding = false
-        guard error == nil else {
-            onState?(false, "Could not publish the health receiver: \(error!.localizedDescription)")
+        if let error {
+            onState?(false, "Could not publish the activity receiver: \(error.localizedDescription)")
             return
         }
         servicePublished = true

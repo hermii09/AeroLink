@@ -49,7 +49,7 @@ private struct ActivityWidgetView: View {
         default:
             VStack(alignment: .leading, spacing: 10) {
                 HStack {
-                    Label("Activity", systemImage: "figure.walk").font(.headline).foregroundStyle(.orange)
+                    Label("Activity", systemImage: "figure.walk").font(.headline).foregroundStyle(.cyan)
                     Spacer()
                     Image(systemName: "arrow.up.right").font(.caption.weight(.bold)).foregroundStyle(.secondary)
                 }
@@ -57,7 +57,7 @@ private struct ActivityWidgetView: View {
                     Text(entry.steps.formatted()).font(.system(size: family == .systemSmall ? 30 : 38, weight: .bold, design: .rounded))
                     Text("steps").font(.subheadline).foregroundStyle(.secondary)
                 }
-                ProgressView(value: min(Double(entry.steps), 10_000), total: 10_000).tint(.orange)
+                ProgressView(value: min(Double(entry.steps), 10_000), total: 10_000).tint(.cyan)
                 Text("Today").font(.caption).foregroundStyle(.secondary)
             }
             .padding()

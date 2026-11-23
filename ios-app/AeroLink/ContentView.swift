@@ -1,6 +1,9 @@
 import Charts
 import SwiftUI
 
+private let AeroCyan = Color(red: 0.04, green: 0.65, blue: 0.78)
+private let AeroBlue = Color(red: 0.10, green: 0.50, blue: 0.82)
+
 struct ContentView: View {
     @ObservedObject var model: CompanionModel
 
@@ -13,7 +16,7 @@ struct ContentView: View {
             settingsPage
                 .tabItem { Label("AeroLink", systemImage: "applewatch") }
         }
-        .tint(Color(red: 0.98, green: 0.34, blue: 0.18))
+        .tint(AeroCyan)
     }
 
     private var activityPage: some View {
@@ -28,7 +31,7 @@ struct ContentView: View {
                         emptyCard(icon: "figure.walk", title: "No activity yet", message: "Start the receiver and keep your watch nearby. Step intervals will appear here.")
                     } else {
                         ForEach(stepReadings.prefix(24)) { reading in
-                            sampleRow(reading, symbol: "figure.walk", tint: Color(red: 0.98, green: 0.34, blue: 0.18))
+                            sampleRow(reading, symbol: "figure.walk", tint: AeroCyan)
                         }
                     }
                 }
@@ -43,11 +46,11 @@ struct ContentView: View {
     private var summaryCard: some View {
         HStack(spacing: 20) {
             ZStack {
-                Circle().stroke(Color.orange.opacity(0.14), lineWidth: 12)
+                Circle().stroke(AeroCyan.opacity(0.14), lineWidth: 12)
                 Circle().trim(from: 0, to: min(Double(model.todaySteps) / 10_000, 1))
-                    .stroke(AngularGradient(colors: [.orange, .pink], center: .center), style: StrokeStyle(lineWidth: 12, lineCap: .round))
+                    .stroke(AngularGradient(colors: [AeroCyan, AeroBlue], center: .center), style: StrokeStyle(lineWidth: 12, lineCap: .round))
                     .rotationEffect(.degrees(-90))
-                Image(systemName: "figure.walk").font(.system(size: 25, weight: .semibold)).foregroundStyle(.orange)
+                Image(systemName: "figure.walk").font(.system(size: 25, weight: .semibold)).foregroundStyle(AeroCyan)
             }
             .frame(width: 72, height: 72)
             VStack(alignment: .leading, spacing: 4) {
@@ -71,7 +74,7 @@ struct ContentView: View {
             } else {
                 Chart(points) { point in
                     BarMark(x: .value("Time", point.date), y: .value("Steps", point.value))
-                        .foregroundStyle(LinearGradient(colors: [.orange, .pink], startPoint: .bottom, endPoint: .top))
+                        .foregroundStyle(LinearGradient(colors: [AeroCyan, AeroBlue], startPoint: .bottom, endPoint: .top))
                         .cornerRadius(5)
                 }
                 .frame(height: 110)
