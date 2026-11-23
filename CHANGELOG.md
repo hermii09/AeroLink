@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.1
+
+- Discover the iPhone companion's Apple Health GATT service on its own BLE connection, independently of the ANCS/AMS notification and media connection.
+- Retry Health receiver discovery while the main bridge session is active.
+- Build the optimized Wear OS APK as the Android Actions artifact.
+
 ## 0.3.0
 
 - Rebranded the watch UI as AeroLink with a boxier aqua and mint visual style.

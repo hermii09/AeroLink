@@ -31,7 +31,7 @@ class BridgeForegroundService : Service() {
     private lateinit var media: MediaSessionBridge
     private var ancs: AncsClient? = null
     private var ams: AmsClient? = null
-    private var healthSync: HealthStepSync? = null
+    private lateinit var healthLink: HealthLinkManager
     private var mediaCollector: Job? = null
     private var retry: Job? = null
     private var stable: Job? = null
@@ -58,6 +58,7 @@ class BridgeForegroundService : Service() {
         diagnostics = BridgeDiagnostics(app.settings)
         diagnostics.event("service_created")
         devices = BleDeviceRepository(this, scope, diagnostics)
+        healthLink = HealthLinkManager(this, scope, app.settings)
         notifications = NotificationBridge(this, diagnostics::event)
         media = MediaSessionBridge(this, { ams?.command(it) }, diagnostics::event)
         connection =
@@ -327,7 +328,6 @@ class BridgeForegroundService : Service() {
         val hasAms =
             app.settings.media &&
                 listOf(Ams.COMMAND, Ams.UPDATE).all { transport.has(Ams.SERVICE, it) }
-        val hasHealth = transport.has(HealthStepSync.SERVICE, HealthStepSync.READING)
         status(ConnectionState.SUBSCRIBING, getString(R.string.core_subscribing))
         if (hasAncs) {
             ancs =
@@ -357,9 +357,9 @@ class BridgeForegroundService : Service() {
             mediaCollector = scope.launch { ams?.state?.collect { media.update(it) } }
             ams!!.start()
         }
-        if (hasHealth) {
-            healthSync = HealthStepSync(this, scope, transport).also { it.start() }
-        }
+        // HealthKit is exposed by the iPhone app's custom peripheral service, separate from the
+        // system ANCS/AMS GATT endpoint used above. Keep this as an independent BLE connection.
+        healthLink.start()
         connection.idle(app.settings.lowPower)
         status(
             ConnectionState.CONNECTED,
@@ -410,8 +410,7 @@ class BridgeForegroundService : Service() {
         ancs = null
         ams?.close()
         ams = null
-        healthSync?.stop()
-        healthSync = null
+        healthLink.stop()
         notifications.clear()
         media.update(MediaState())
     }

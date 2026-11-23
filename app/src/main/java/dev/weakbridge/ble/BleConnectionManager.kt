@@ -151,7 +151,7 @@ class BleConnectionManager(
                 }
     }
 
-    suspend fun discover() {
+    override suspend fun discover() {
         op("discover") { it.discoverServices() }
     }
 

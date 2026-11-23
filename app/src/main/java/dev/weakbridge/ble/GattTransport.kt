@@ -3,6 +3,8 @@ package dev.weakbridge.ble
 import java.util.UUID
 
 interface GattTransport {
+    suspend fun discover()
+
     suspend fun subscribe(
         service: UUID,
         characteristic: UUID,
