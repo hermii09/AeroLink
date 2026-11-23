@@ -14,7 +14,7 @@ struct ContentView: View {
                         Text("Your watch, connected.").foregroundStyle(.white.opacity(0.75))
                     }
                     card(title: "Apple Health", symbol: "heart.fill") {
-                        Text("Choose to send steps and heart rate from your Galaxy Watch to Apple Health.")
+                        Text("Choose to send step counts from your Galaxy Watch to Apple Health.")
                             .font(.subheadline).foregroundStyle(.white.opacity(0.8))
                         Button(model.healthReady ? "Health setup complete" : "Set up Apple Health") {
                             Task { await model.enableHealthSync() }

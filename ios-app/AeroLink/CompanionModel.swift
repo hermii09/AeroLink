@@ -68,13 +68,10 @@ final class CompanionModel: ObservableObject {
 
 enum HealthMetric: String, Decodable {
     case steps
-    case heartRate
 
-    var displayName: String { self == .steps ? "steps" : "heart-rate" }
+    var displayName: String { "steps" }
 
-    var quantityType: HKQuantityTypeIdentifier {
-        self == .steps ? .stepCount : .heartRate
-    }
+    var quantityType: HKQuantityTypeIdentifier { .stepCount }
 }
 
 struct HealthReading: Decodable {
@@ -95,7 +92,6 @@ private final class HealthKitWriter {
         }
         let types: Set<HKSampleType> = [
             HKObjectType.quantityType(forIdentifier: .stepCount)!,
-            HKObjectType.quantityType(forIdentifier: .heartRate)!,
         ]
         try await store.requestAuthorization(toShare: types, read: [])
     }
@@ -105,20 +101,16 @@ private final class HealthKitWriter {
               reading.start <= reading.end,
               reading.end.timeIntervalSince(reading.start) <= 90 * 86_400,
               UUID(uuidString: reading.eventID) != nil,
-              (reading.metric == .steps && reading.unit == "count") ||
-                (reading.metric == .heartRate && reading.unit == "countPerMinute") else {
+              reading.metric == .steps && reading.unit == "count" else {
             throw CompanionError.invalidReading
         }
         let identifier = reading.metric.quantityType
         guard let type = HKObjectType.quantityType(forIdentifier: identifier) else {
             throw CompanionError.invalidReading
         }
-        let unit: HKUnit = reading.metric == .steps
-            ? HKUnit.count()
-            : HKUnit.count().unitDivided(by: HKUnit.minute())
         let sample = HKQuantitySample(
             type: type,
-            quantity: HKQuantity(unit: unit, doubleValue: reading.value),
+            quantity: HKQuantity(unit: .count(), doubleValue: reading.value),
             start: reading.start,
             end: reading.end,
             metadata: [HKMetadataKeySyncIdentifier: reading.eventID, HKMetadataKeySyncVersion: 1]

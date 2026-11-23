@@ -21,7 +21,7 @@ The watch can reliably receive an iPhone notification's app identifier, display 
 
 ## Apple Health path
 
-HealthKit is available only to an iOS or watchOS app with the HealthKit capability and the user's per-type authorization. The iPhone companion requests write permission for steps and heart rate and hosts a local Bluetooth GATT receiver. The watch now samples step-counter changes while connected and uses a queued, chunked sender; heart-rate sampling is still pending. Apple permits background Bluetooth work under declared modes, but limits how long an app runs, so sync reliability and battery use need real-device validation. Start with steps, then add heart rate and workouts only after validating timestamps, units, deduplication and permission behavior.
+HealthKit is available only to an iOS or watchOS app with the HealthKit capability and the user's per-type authorization. The iPhone companion requests write permission for steps and hosts a local Bluetooth GATT receiver. The watch samples step-counter changes while connected and uses a queued, chunked sender on a separate BLE connection from the ANCS/AMS notification and music link; heart-rate sampling is still pending. Apple permits background Bluetooth work under declared modes, but limits how long an app runs, so sync reliability and battery use need real-device validation. Add heart rate and workouts only after validating timestamps, units, deduplication and permission behavior.
 
 Suggested milestones:
 
