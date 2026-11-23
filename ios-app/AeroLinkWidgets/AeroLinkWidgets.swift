@@ -8,11 +8,15 @@ private struct ActivityEntry: TimelineEntry {
 
     static func current() -> ActivityEntry {
         let readings = ActivityDataStore.load()
+        let snapshot = ActivityDataStore.loadHealthSnapshot()
+        let healthSteps = snapshot?.steps.first { Calendar.current.isDateInToday($0.date) }
         let today = readings.filter { $0.metric == .steps && Calendar.current.isDateInToday($0.end) }
-        let sleep = readings.filter { $0.metric == .sleep }.max { $0.end < $1.end }
+        let sleep = snapshot?.sleep.max { $0.end < $1.end }
+        let localSleep = readings.filter { $0.metric == .sleep }.max { $0.end < $1.end }
         return ActivityEntry(date: .now,
-                             steps: Int(today.reduce(0) { $0 + $1.value }.rounded()),
-                             sleepMinutes: sleep.map { Int($0.value.rounded()) })
+                             steps: Int((healthSteps?.steps ?? today.reduce(0) { $0 + $1.value }).rounded()),
+                             sleepMinutes: sleep.map { Int($0.asleepMinutes.rounded()) }
+                                ?? localSleep.map { Int($0.value.rounded()) })
     }
 }
 
@@ -73,7 +77,7 @@ struct AeroLinkActivityWidget: Widget {
             ActivityWidgetView(entry: entry)
         }
         .configurationDisplayName("AeroLink Activity")
-        .description("See step totals received from your Galaxy Watch.")
+        .description("See step totals from Apple Health or AeroLink watch sync.")
         .supportedFamilies([.systemSmall, .systemMedium, .accessoryCircular, .accessoryRectangular, .accessoryInline])
     }
 }
@@ -110,7 +114,7 @@ struct AeroLinkSleepWidget: Widget {
             SleepWidgetView(entry: entry)
         }
         .configurationDisplayName("AeroLink Sleep")
-        .description("See the latest sleep session synced to AeroLink.")
+        .description("See the latest sleep session from Apple Health or AeroLink.")
         .supportedFamilies([.systemSmall, .systemMedium, .accessoryRectangular, .accessoryInline])
     }
 }

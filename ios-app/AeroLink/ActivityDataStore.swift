@@ -33,9 +33,29 @@ struct StepPoint: Identifiable {
     var id: Date { date }
 }
 
+struct HealthDaySummary: Codable, Identifiable {
+    let date: Date
+    let steps: Double
+    var id: String { String(Int(date.timeIntervalSince1970)) }
+}
+
+struct SleepSessionSummary: Codable, Identifiable {
+    let id: String
+    let start: Date
+    let end: Date
+    let asleepMinutes: Double
+}
+
+struct HealthSnapshot: Codable {
+    let updatedAt: Date
+    let steps: [HealthDaySummary]
+    let sleep: [SleepSessionSummary]
+}
+
 enum ActivityDataStore {
     static let appGroup = "group.app.aerolink.ios"
     private static let key = "aerolink.activity-readings.v1"
+    private static let healthSnapshotKey = "aerolink.health-snapshot.v1"
 
     private static var defaults: UserDefaults { UserDefaults(suiteName: appGroup) ?? .standard }
 
@@ -48,5 +68,15 @@ enum ActivityDataStore {
     static func save(_ readings: [HealthReading]) {
         guard let data = try? JSONEncoder().encode(readings) else { return }
         defaults.set(data, forKey: key)
+    }
+
+    static func loadHealthSnapshot() -> HealthSnapshot? {
+        guard let data = defaults.data(forKey: healthSnapshotKey) else { return nil }
+        return try? JSONDecoder().decode(HealthSnapshot.self, from: data)
+    }
+
+    static func saveHealthSnapshot(_ snapshot: HealthSnapshot) {
+        guard let data = try? JSONEncoder().encode(snapshot) else { return }
+        defaults.set(data, forKey: healthSnapshotKey)
     }
 }

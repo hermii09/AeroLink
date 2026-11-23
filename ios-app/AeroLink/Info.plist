@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
     <key>CFBundleDisplayName</key>
-    <string>AeroLink</string>
+    <string>AeroLink Health</string>
     <key>CFBundleName</key>
     <string>$(PRODUCT_NAME)</string>
     <key>CFBundleIdentifier</key>
@@ -17,9 +17,9 @@
     <key>CFBundleShortVersionString</key>
     <string>$(MARKETING_VERSION)</string>
     <key>NSHealthShareUsageDescription</key>
-    <string>AeroLink does not read your existing Apple Health data.</string>
+    <string>AeroLink Health reads step counts and sleep records to show your activity report on this iPhone.</string>
     <key>NSHealthUpdateUsageDescription</key>
-    <string>AeroLink can save step counts received from your Galaxy Watch.</string>
+    <string>AeroLink Health can save step and sleep readings received from your Galaxy Watch.</string>
     <key>NSBluetoothAlwaysUsageDescription</key>
     <string>AeroLink uses Bluetooth to receive health readings from your Galaxy Watch.</string>
     <key>UIBackgroundModes</key>

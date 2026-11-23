@@ -6,6 +6,7 @@ private let AeroBlue = Color(red: 0.10, green: 0.50, blue: 0.82)
 
 struct ContentView: View {
     @ObservedObject var model: CompanionModel
+    @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
         TabView {
@@ -14,9 +15,17 @@ struct ContentView: View {
             sleepPage
                 .tabItem { Label("Sleep", systemImage: "bed.double.fill") }
             settingsPage
-                .tabItem { Label("AeroLink", systemImage: "applewatch") }
+                .tabItem { Label("Health", systemImage: "heart.fill") }
         }
         .tint(AeroCyan)
+        .task {
+            if model.healthReady { await model.refreshHealthData() }
+        }
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .active && model.healthReady {
+                Task { await model.refreshHealthData() }
+            }
+        }
     }
 
     private var activityPage: some View {
@@ -25,13 +34,13 @@ struct ContentView: View {
                 VStack(alignment: .leading, spacing: 18) {
                     summaryCard
                     chartCard
-                    sectionHeader("Recent activity", detail: "Steps received from your watch")
-                    let stepReadings = model.readings.filter { $0.metric == .steps }.sorted { $0.end > $1.end }
-                    if stepReadings.isEmpty {
-                        emptyCard(icon: "figure.walk", title: "No activity yet", message: "Start the receiver and keep your watch nearby. Step intervals will appear here.")
+                    sectionHeader("Recent activity", detail: model.stepHistorySource)
+                    let stepDays = model.recentStepDays
+                    if stepDays.isEmpty {
+                        emptyCard(icon: "figure.walk", title: "No step data yet", message: "Set up Apple Health to load your step history, or start the receiver to get new steps from your watch.")
                     } else {
-                        ForEach(stepReadings.prefix(24)) { reading in
-                            sampleRow(reading, symbol: "figure.walk", tint: AeroCyan)
+                        ForEach(stepDays.prefix(14)) { day in
+                            stepRow(day)
                         }
                     }
                 }
@@ -40,6 +49,7 @@ struct ContentView: View {
             .background(Color(uiColor: .systemGroupedBackground))
             .navigationTitle("Activity")
             .navigationBarTitleDisplayMode(.large)
+            .refreshable { await model.refreshHealthData() }
         }
     }
 
@@ -88,8 +98,13 @@ struct ContentView: View {
 
     private var todayPoints: [StepPoint] {
         let calendar = Calendar.current
-        return model.readings.filter { $0.metric == .steps && calendar.isDateInToday($0.end) }
+        let watchPoints = model.readings.filter { $0.metric == .steps && calendar.isDateInToday($0.end) }
             .map { StepPoint(date: $0.end, value: $0.value) }.sorted { $0.date < $1.date }
+        if !watchPoints.isEmpty { return watchPoints }
+        if let healthDay = model.recentStepDays.first(where: { calendar.isDateInToday($0.date) }) {
+            return [StepPoint(date: .now, value: healthDay.steps)]
+        }
+        return []
     }
 
     private var sleepPage: some View {
@@ -97,13 +112,13 @@ struct ContentView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 18) {
                     sleepSummary
-                    sectionHeader("Sleep history", detail: "Sleep sessions from your watch")
-                    let sleepReadings = model.readings.filter { $0.metric == .sleep }.sorted { $0.end > $1.end }
-                    if sleepReadings.isEmpty {
-                        emptyCard(icon: "bed.double", title: "Sleep sync isn’t available yet", message: "The current watch app sends steps only. Sleep sessions need a watch-side sleep data source before they can appear here.")
+                    sectionHeader("Sleep history", detail: model.sleepHistorySource)
+                    let sleepSessions = model.recentSleepSessions
+                    if sleepSessions.isEmpty {
+                        emptyCard(icon: "bed.double", title: "No sleep data yet", message: "Set up Apple Health to load sleep records. The current watch APK does not send sleep sessions yet.")
                     } else {
-                        ForEach(sleepReadings.prefix(14)) { reading in
-                            sampleRow(reading, symbol: "bed.double.fill", tint: Color(red: 0.40, green: 0.35, blue: 0.91))
+                        ForEach(sleepSessions.prefix(14)) { session in
+                            sleepRow(session)
                         }
                     }
                 }
@@ -112,6 +127,7 @@ struct ContentView: View {
             .background(Color(uiColor: .systemGroupedBackground))
             .navigationTitle("Sleep")
             .navigationBarTitleDisplayMode(.large)
+            .refreshable { await model.refreshHealthData() }
         }
     }
 
@@ -124,7 +140,7 @@ struct ContentView: View {
                 Image(systemName: "moon.stars.fill").foregroundStyle(.indigo.opacity(0.6))
             }
             if let sleep = model.latestSleep {
-                Text(duration(sleep.value)).font(.system(size: 38, weight: .bold, design: .rounded))
+                Text(duration(sleep.asleepMinutes)).font(.system(size: 38, weight: .bold, design: .rounded))
                 Text(sleep.start.formatted(date: .abbreviated, time: .shortened) + " – " + sleep.end.formatted(date: .omitted, time: .shortened))
                     .font(.subheadline).foregroundStyle(.secondary)
             } else {
@@ -146,18 +162,21 @@ struct ContentView: View {
                     }
                 }
                 Section("Apple Health") {
-                    Label(model.healthReady ? "Health access requested" : "Health access not set up", systemImage: "heart.fill")
-                    Button(model.healthReady ? "Health setup complete" : "Set up Apple Health") {
-                        Task { await model.enableHealthSync() }
+                    Label(model.healthReady ? "Health access set up" : "Health access not set up", systemImage: "heart.fill")
+                    if model.healthReady {
+                        Button("Refresh Health Data") { Task { await model.refreshHealthData() } }
+                    } else {
+                        Button("Set up Apple Health") { Task { await model.enableHealthSync() } }
                     }
-                    .disabled(model.healthReady)
-                    Text("AeroLink stores received step data on this iPhone even if Apple Health access is unavailable.")
+                    Text("AeroLink reads steps and sleep from Apple Health when you allow access. It can also save readings received from your Galaxy Watch.")
+                        .font(.footnote).foregroundStyle(.secondary)
+                    Text("If the report is empty, check Settings → Health → Data Access & Devices → AeroLink Health. iOS doesn’t tell apps whether read access was denied.")
                         .font(.footnote).foregroundStyle(.secondary)
                 }
                 Section("Status") { Text(model.status).font(.footnote).foregroundStyle(.secondary) }
                 Section { Text("Your activity data stays on your devices. AeroLink does not use a cloud account.").font(.footnote).foregroundStyle(.secondary) }
             }
-            .navigationTitle("AeroLink")
+            .navigationTitle("AeroLink Health")
         }
     }
 
@@ -179,17 +198,32 @@ struct ContentView: View {
         .background(.background, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
     }
 
-    private func sampleRow(_ reading: HealthReading, symbol: String, tint: Color) -> some View {
+    private func stepRow(_ day: HealthDaySummary) -> some View {
         HStack(spacing: 13) {
-            Image(systemName: symbol).font(.system(size: 17, weight: .semibold)).foregroundStyle(tint)
-                .frame(width: 40, height: 40).background(tint.opacity(0.12), in: Circle())
+            Image(systemName: "figure.walk").font(.system(size: 17, weight: .semibold)).foregroundStyle(AeroCyan)
+                .frame(width: 40, height: 40).background(AeroCyan.opacity(0.12), in: Circle())
             VStack(alignment: .leading, spacing: 3) {
-                Text(reading.metric == .steps ? "Steps" : "Sleep session").font(.headline)
-                Text(reading.start.formatted(date: .abbreviated, time: .shortened)).font(.caption).foregroundStyle(.secondary)
+                Text(Calendar.current.isDateInToday(day.date) ? "Today" : day.date.formatted(date: .abbreviated, time: .omitted))
+                    .font(.headline)
+                Text("Daily step total").font(.caption).foregroundStyle(.secondary)
             }
             Spacer()
-            Text(reading.metric == .steps ? "\(Int(reading.value).formatted())" : duration(reading.value))
-                .font(.headline.monospacedDigit())
+            Text(Int(day.steps.rounded()).formatted()).font(.headline.monospacedDigit())
+        }
+        .padding(13).background(.background, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+    }
+
+    private func sleepRow(_ session: SleepSessionSummary) -> some View {
+        HStack(spacing: 13) {
+            Image(systemName: "bed.double.fill").font(.system(size: 17, weight: .semibold)).foregroundStyle(.indigo)
+                .frame(width: 40, height: 40).background(Color.indigo.opacity(0.12), in: Circle())
+            VStack(alignment: .leading, spacing: 3) {
+                Text(session.end.formatted(date: .abbreviated, time: .omitted)).font(.headline)
+                Text(session.start.formatted(date: .omitted, time: .shortened) + " – " + session.end.formatted(date: .omitted, time: .shortened))
+                    .font(.caption).foregroundStyle(.secondary)
+            }
+            Spacer()
+            Text(duration(session.asleepMinutes)).font(.headline.monospacedDigit())
         }
         .padding(13).background(.background, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
     }
