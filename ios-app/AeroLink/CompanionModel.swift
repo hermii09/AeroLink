@@ -1,16 +1,30 @@
 import Combine
 import Foundation
 import HealthKit
+import WidgetKit
 
 @MainActor
 final class CompanionModel: ObservableObject {
     @Published private(set) var healthReady = false
     @Published private(set) var receiverRunning = false
     @Published private(set) var status = "Health access has not been requested."
+    @Published private(set) var readings: [HealthReading]
 
     private let health = HealthKitWriter()
     private var receiver: HealthPeripheral?
     private var savedEventIDs = Set(UserDefaults.standard.stringArray(forKey: "saved-health-event-ids") ?? [])
+
+    init() { readings = ActivityDataStore.load() }
+
+    var todaySteps: Int {
+        let calendar = Calendar.current
+        return Int(readings.filter { $0.metric == .steps && calendar.isDateInToday($0.end) }
+            .reduce(0) { $0 + $1.value }.rounded())
+    }
+
+    var latestSleep: HealthReading? {
+        readings.filter { $0.metric == .sleep }.max { $0.end < $1.end }
+    }
 
     func enableHealthSync() async {
         do {
@@ -23,29 +37,38 @@ final class CompanionModel: ObservableObject {
     }
 
     func startReceiver() {
-        guard healthReady else {
-            status = "Allow Health access before starting sync."
-            return
-        }
         guard receiver == nil else { return }
         let peripheral = HealthPeripheral { [weak self] reading, completion in
             Task { @MainActor in
-                do {
-                    guard let self else { completion(false); return }
-                    if !self.savedEventIDs.contains(reading.eventID) {
-                        try await self.health.save(reading)
-                        self.savedEventIDs.insert(reading.eventID)
-                        if self.savedEventIDs.count > 2_000 {
-                            self.savedEventIDs = Set(self.savedEventIDs.suffix(1_000))
-                        }
-                        UserDefaults.standard.set(Array(self.savedEventIDs), forKey: "saved-health-event-ids")
-                    }
-                    self.status = "Saved a \(reading.metric.displayName) sample to Apple Health."
-                    completion(true)
-                } catch {
-                    self?.status = "Could not save sample: \(error.localizedDescription)"
+                guard let self else { completion(false); return }
+                guard reading.isValid else {
+                    self.status = "The watch sent an invalid activity sample."
                     completion(false)
+                    return
                 }
+                if !self.savedEventIDs.contains(reading.eventID) {
+                    self.readings.append(reading)
+                    self.readings = Array(self.readings.suffix(5_000))
+                    ActivityDataStore.save(self.readings)
+                    self.savedEventIDs.insert(reading.eventID)
+                    if self.savedEventIDs.count > 2_000 {
+                        self.savedEventIDs = Set(self.savedEventIDs.suffix(1_000))
+                    }
+                    UserDefaults.standard.set(Array(self.savedEventIDs), forKey: "saved-health-event-ids")
+                }
+
+                if self.healthReady {
+                    do {
+                        try await self.health.save(reading)
+                        self.status = "Received \(reading.metric.displayName); saved to Apple Health."
+                    } catch {
+                        self.status = "Received \(reading.metric.displayName) on this phone. Apple Health save failed: \(error.localizedDescription)"
+                    }
+                } else {
+                    self.status = "Received \(reading.metric.displayName) and saved it in AeroLink."
+                }
+                WidgetCenter.shared.reloadAllTimelines()
+                completion(true)
             }
         }
         peripheral.onState = { [weak self] (running: Bool, message: String) in
@@ -62,25 +85,8 @@ final class CompanionModel: ObservableObject {
         receiver?.stop()
         receiver = nil
         receiverRunning = false
-        status = "Health receiver stopped."
+        status = "Watch receiver stopped."
     }
-}
-
-enum HealthMetric: String, Decodable {
-    case steps
-
-    var displayName: String { "steps" }
-
-    var quantityType: HKQuantityTypeIdentifier { .stepCount }
-}
-
-struct HealthReading: Decodable {
-    let eventID: String
-    let metric: HealthMetric
-    let value: Double
-    let unit: String
-    let start: Date
-    let end: Date
 }
 
 private final class HealthKitWriter {
@@ -90,22 +96,13 @@ private final class HealthKitWriter {
         guard HKHealthStore.isHealthDataAvailable() else {
             throw CompanionError.healthUnavailable
         }
-        let types: Set<HKSampleType> = [
-            HKObjectType.quantityType(forIdentifier: .stepCount)!,
-        ]
+        let types: Set<HKSampleType> = [HKObjectType.quantityType(forIdentifier: .stepCount)!]
         try await store.requestAuthorization(toShare: types, read: [])
     }
 
     func save(_ reading: HealthReading) async throws {
-        guard reading.value.isFinite, reading.value >= 0,
-              reading.start <= reading.end,
-              reading.end.timeIntervalSince(reading.start) <= 90 * 86_400,
-              UUID(uuidString: reading.eventID) != nil,
-              reading.metric == .steps && reading.unit == "count" else {
-            throw CompanionError.invalidReading
-        }
-        let identifier = reading.metric.quantityType
-        guard let type = HKObjectType.quantityType(forIdentifier: identifier) else {
+        guard reading.isValid, reading.metric == .steps,
+              let type = HKObjectType.quantityType(forIdentifier: .stepCount) else {
             throw CompanionError.invalidReading
         }
         let sample = HKQuantitySample(

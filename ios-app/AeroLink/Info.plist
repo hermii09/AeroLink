@@ -19,7 +19,7 @@
     <key>NSHealthShareUsageDescription</key>
     <string>AeroLink does not read your existing Apple Health data.</string>
     <key>NSHealthUpdateUsageDescription</key>
-    <string>AeroLink saves steps and heart-rate readings received from your Galaxy Watch.</string>
+    <string>AeroLink can save step counts received from your Galaxy Watch.</string>
     <key>NSBluetoothAlwaysUsageDescription</key>
     <string>AeroLink uses Bluetooth to receive health readings from your Galaxy Watch.</string>
     <key>UIBackgroundModes</key>
