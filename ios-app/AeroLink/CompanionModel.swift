@@ -43,12 +43,12 @@ final class CompanionModel: ObservableObject {
                     self.status = "Saved a \(reading.metric.displayName) sample to Apple Health."
                     completion(true)
                 } catch {
-                    self.status = "Could not save sample: \(error.localizedDescription)"
+                    self?.status = "Could not save sample: \(error.localizedDescription)"
                     completion(false)
                 }
             }
         }
-        peripheral.onState = { [weak self] running, message in
+        peripheral.onState = { [weak self] (running: Bool, message: String) in
             Task { @MainActor in
                 self?.receiverRunning = running
                 self?.status = message
