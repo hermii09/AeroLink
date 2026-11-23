@@ -50,6 +50,12 @@ Notification settings filter by category and observed app identifier. Names use 
 
 Observed app names and message contents are RAM-only; selected bond, preferences and blocked identifiers persist. Unblocking can restore a retained card or allow the next event, but does not fetch an iPhone notification archive. Diagnostics are opt-in, event-driven, bounded, and copied only by an explicit user action.
 
+## Apple Health step transfer
+
+When the iPhone companion publishes the AeroLink Health GATT service, the watch registers its step counter only if Android Activity Recognition permission is granted. Every five minutes, positive step deltas become a pending interval with an event UUID. The encoded sample is split into ordered 15-byte chunks to fit the default ATT write size. The pending sample remains on the watch until each chunk is acknowledged; the final iPhone acknowledgment is sent only after the HealthKit save completes. The watch then commits its step baseline. Reboots reset the sensor baseline without creating a negative delta. The iPhone stores recent event IDs so a retried sample is not written twice. No health data is uploaded to a server.
+
+This path has not yet been tested on device. It exports new step deltas observed while the Health service is available; it does not read historical Samsung Health data. iPhone GATT service coexistence with system ANCS/AMS and background behavior need validation on the target devices.
+
 ## Protocol and platform references
 
 - [Apple Notification Center Service](https://developer.apple.com/library/archive/documentation/CoreBluetooth/Reference/AppleNotificationCenterServiceSpecification/Specification/Specification.html): notification events, attributes and supported actions.

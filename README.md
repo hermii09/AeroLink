@@ -1,7 +1,7 @@
 <div align="center">
   <img src="app/src/main/res/drawable-nodpi/ic_launcher_art.png" width="128" alt="WeakBridge">
-  <h1>WeakBridge</h1>
-  <p>Connect Samsung Galaxy Watch to iPhone for notifications and music controls.</p>
+  <h1>AeroLink</h1>
+  <p>Connect Samsung Galaxy Watch to iPhone for notifications, music controls, and planned Apple Health sync.</p>
   <p><a href="https://github.com/Weakmafaka/WeakBridge/releases/latest">Download APK</a> · <a href="docs/README.ru.md">Русский</a> · <a href="https://github.com/Weakmafaka/WeakBridge/issues">Report a bug</a></p>
   <p>
     <a href="https://github.com/Weakmafaka/WeakBridge/releases/latest"><img src="https://img.shields.io/github/v/release/Weakmafaka/WeakBridge" alt="Latest release"></a>
@@ -10,7 +10,7 @@
   </p>
 </div>
 
-WeakBridge is an open-source **Wear OS iPhone Bluetooth bridge** that connects an already configured Samsung Galaxy Watch to an iPhone. Install one app on the watch: no iPhone companion, account or cloud service is required. Music stays on the iPhone or its selected audio output. **ANCS notifications** and **AMS music controls** use the iPhone’s built-in Apple Bluetooth services.
+AeroLink is an open-source **Wear OS iPhone Bluetooth bridge** based on WeakBridge. It connects an already configured Samsung Galaxy Watch to an iPhone. Music stays on the iPhone or its selected audio output. **ANCS notifications** and **AMS music controls** use the iPhone’s built-in Apple Bluetooth services. An optional iPhone companion is under development for Apple Health export.
 
 <p align="center">
   <img src="docs/images/watch6-home-0.2.0.png" width="220" alt="Connection and service status on Galaxy Watch6">
@@ -30,6 +30,7 @@ Screenshots from Galaxy Watch6. The interface is available in English and Russia
 | Filters | Choose categories and individual apps after their first notification arrives |
 | Alert controls | Group by app, hide message content, set quiet hours and limit repeat alerts |
 | Music | See track information and control play/pause, next/previous and relative volume through the watch's system player |
+| Health | Step-counter sync code and iPhone HealthKit receiver added; not verified end-to-end yet |
 | Connection | Reconnect to a saved iPhone, view separate notification/music status and keep the bridge running after closing the app |
 | Diagnostics | Read, copy and clear local counters without logging message content |
 
@@ -45,7 +46,7 @@ Version 0.2.0 adds the new interface and notification controls, avoids unnecessa
 | Watch minimum | Already configured Wear OS watch with Android 13 / API 33+ |
 | Other hardware and apps | Separate device/firmware/music-app testing required |
 
-Requires Android 13 / API 33 or later on an already configured watch. WeakBridge uses Apple's ANCS and AMS services. It does not set up a factory-reset watch, replace Galaxy Wearable, stream audio, sync health data or send arbitrary message replies. Notification actions depend on what iOS supplies. Gestures depend on watch firmware; double pinch in AOD and global fist-to-pause are not provided by this app.
+Requires Android 13 / API 33 or later on an already configured watch. AeroLink uses Apple's ANCS and AMS services. It does not set up a factory-reset watch, replace Galaxy Wearable, stream audio, or send arbitrary message replies. Step sync code now spans both apps, but requires an Activity Recognition permission and has not been verified end-to-end on device. Notification actions depend on what iOS supplies. Gestures depend on watch firmware; double pinch in AOD and global fist-to-pause are not provided by this app.
 
 ## Install
 
@@ -88,7 +89,7 @@ No. One APK runs on the watch and uses the iPhone's built-in Apple Notification 
 
 ### Which notifications and music features are supported?
 
-The watch receives new notifications that iOS shares, including updates, removals and supported actions. Filters, grouping, quiet hours and hidden previews are configured on the watch. Music controls include play/pause, track changes and relative volume; audio stays on the iPhone or its chosen output. Arbitrary text replies, audio streaming and health sync are not supported.
+The watch receives new notifications that iOS shares, including updates, removals and supported actions. Filters, grouping, quiet hours and hidden previews are configured on the watch. Music controls include play/pause, track changes and relative volume; audio stays on the iPhone or its chosen output. Arbitrary text replies and audio streaming are not supported. Step-to-Apple-Health sync code is included but needs device testing; heart-rate sync is not implemented on the watch yet.
 
 ### Can I set up a factory-reset Galaxy Watch with only an iPhone?
 
@@ -96,7 +97,7 @@ No. The watch must already be configured and run Android 13 / API 33 or later. O
 
 ## Privacy and battery
 
-Notification content and observed app names stay in memory and Android's notification system; there is no persistent message history. Only preferences, blocked app identifiers and the selected Bluetooth device are stored. There is no Internet permission, analytics or account system.
+Notification content and observed app names stay in memory and Android's notification system; there is no persistent message history. Preferences, blocked app identifiers, the selected Bluetooth device and a pending step-sync interval are stored locally. There is no Internet permission, analytics or account system. The iPhone stores deduplication IDs and writes authorized step samples directly to Apple Health.
 
 The low-power BLE design is event-driven, with no continuous scan, periodic keepalive or permanent wake lock. Recovery attempts are bounded. Version 0.2.0 reduces redundant work, but no battery-life percentage is claimed. See [power design and measurement](BATTERY_OPTIMIZATION.md) for retry limits, LOW_POWER connection hints and reproducible battery-test scenarios. These design choices still need long-term battery measurements.
 

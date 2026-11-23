@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.0
+
+- Rebranded the watch UI as AeroLink with a boxier aqua and mint visual style.
+- Added generated sender initials badges to mirrored notifications.
+- Added step-count transfer to an optional iPhone HealthKit companion; real-device validation is still required.
+
 ## 0.2.0 — 2026-11-02
 
 - Reorganize the watch interface into Connection, Settings, Notifications, Diagnostics and Help, with Russian/English resources and rotary navigation.
@@ -27,4 +33,4 @@ First public beta. Dedicated release signing, optimized release build, English a
 
 - Optimize the watch build and simplify scrolling in the main menu.
 - Separate saved devices from ANCS scan results.
-- Show permission and service availability separately.
+- Show permission and service availability separately.\n

@@ -24,7 +24,7 @@
     <string name="ui_connect_iphone">Подключить iPhone</string>
     <string name="ui_reconnect">Подключить снова</string>
     <string name="ui_permissions">Разрешить доступ</string>
-    <string name="ui_permissions_body">«Устройства поблизости» нужны для Bluetooth. Разрешение на уведомления позволяет показывать сообщения iPhone на часах.</string>
+    <string name="ui_permissions_body">«Устройства поблизости» нужны для Bluetooth. Разрешение на уведомления показывает сообщения iPhone. Распознавание активности нужно для подсчёта шагов и синхронизации с Apple Health.</string>
     <string name="ui_saved_device">Сохранённый iPhone</string>
     <string name="ui_no_saved_device">iPhone ещё не выбран</string>
     <string name="ui_saved_devices">Сохранённые устройства</string>

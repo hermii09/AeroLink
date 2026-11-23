@@ -43,10 +43,12 @@ import dev.weakbridge.ble.ConnectionState
 import dev.weakbridge.service.BridgeForegroundService as Bridge
 import kotlinx.coroutines.launch
 
-private val Accent = Color(0xFF7BDDFF)
-private val Good = Color(0xFF8DE2BB)
-private val Muted = Color(0xFFAAB5C6)
-private val Panel = Color(0xFF151B24)
+// AquaLink's Frutiger Aero inspired palette: clear water blues, mint highlights,
+// and high contrast surfaces that remain legible on the small AMOLED display.
+private val Accent = Color(0xFF76E4F2)
+private val Good = Color(0xFF9AEACB)
+private val Muted = Color(0xFFA9C9D4)
+private val Panel = Color(0xFF102631)
 private val Danger = Color(0xFFFFA49A)
 
 private enum class Page(@StringRes val title: Int) {
@@ -114,12 +116,12 @@ internal fun BridgeWatchApp(
         colors =
             Colors(
                 primary = Accent,
-                primaryVariant = Color(0xFF174C66),
+                primaryVariant = Color(0xFF176477),
                 secondary = Good,
-                secondaryVariant = Color(0xFF21543D),
-                background = Color.Black,
+                secondaryVariant = Color(0xFF24634F),
+                background = Color(0xFF06151D),
                 surface = Panel,
-                onPrimary = Color(0xFF002738),
+                onPrimary = Color(0xFF06252C),
                 onSecondary = Color(0xFF073623),
                 onBackground = Color.White,
                 onSurface = Color.White,
@@ -192,7 +194,7 @@ internal fun BridgeWatchApp(
                     WatchList(initialIndex) {
                         item {
                             PageTitle(
-                                if (page == Page.HOME) "WeakBridge" else stringResource(page.title)
+                                if (page == Page.HOME) "AeroLink" else stringResource(page.title)
                             )
                         }
                         if (confirm != null) {
@@ -666,7 +668,7 @@ internal fun BridgeWatchApp(
                                         ) {
                                             clipboard.setText(
                                                 AnnotatedString(
-                                                    "WeakBridge ${BuildConfig.VERSION_NAME}\n${status.state}\n${status.detail}\n$snapshot"
+                                                    "AeroLink ${BuildConfig.VERSION_NAME}\n${status.state}\n${status.detail}\n$snapshot"
                                                 )
                                             )
                                             copied = true
@@ -786,7 +788,7 @@ private fun HomeStatus(status: BridgeStatus, compact: Boolean = false) {
     Column(
         modifier =
             Modifier.fillMaxWidth()
-                .clip(RoundedCornerShape(22.dp))
+                .clip(RoundedCornerShape(9.dp))
                 .background(Panel)
                 .padding(14.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -813,7 +815,7 @@ private fun ServicesCard(
     Column(
         modifier =
             Modifier.fillMaxWidth()
-                .clip(RoundedCornerShape(20.dp))
+                .clip(RoundedCornerShape(9.dp))
                 .background(Panel)
                 .padding(12.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -963,7 +965,7 @@ private fun Setting(
     checked: Boolean,
     onChange: (Boolean) -> Unit,
 ) {
-    Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp)).background(Panel)) {
+    Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(9.dp)).background(Panel)) {
         ToggleChip(
             checked = checked,
             onCheckedChange = onChange,

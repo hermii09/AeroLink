@@ -1,8 +1,9 @@
-<?xml version="1.0" encoding="utf-8"?>
-<inset xmlns:android="http://schemas.android.com/apk/res/android"
-    android:inset="5%">
-    <bitmap
-        android:src="@drawable/ic_launcher_art"
-        android:gravity="fill"
-        android:filter="true" />
-</inset>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path android:fillColor="#E9FFFF" android:pathData="M27,28h24v18h-8v-9h-8v9h-8zM57,28h24v18h-8v-9h-8v9h-8z" />
+    <path android:fillColor="#FFFFFF" android:pathData="M27,62h24v18h-8v-9h-8v9h-8zM57,62h24v18h-8v-9h-8v9h-8z" />
+    <path android:fillColor="#B9FFF0" android:pathData="M43,45h22v18h-8v-9h-6v9h-8z" />
+</vector>

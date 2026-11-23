@@ -202,6 +202,7 @@ class NotificationBridge(
             val builder =
                 NotificationCompat.Builder(context, channel(record.category))
                     .setSmallIcon(NotificationAppCatalog.icon(record.category))
+                    .setLargeIcon(NotificationAppCatalog.largeIcon(context, record.appId, record.appName))
                     .setContentTitle(title)
                     .setSubText(record.appName)
                     .setContentText(text)
@@ -270,6 +271,7 @@ class NotificationBridge(
             val builder =
                 NotificationCompat.Builder(context, channel(last.category))
                     .setSmallIcon(NotificationAppCatalog.icon(last.category))
+                    .setLargeIcon(NotificationAppCatalog.largeIcon(context, last.appId, last.appName))
                     .setContentTitle(last.appName)
                     .setContentText(count)
                     .setStyle(style)

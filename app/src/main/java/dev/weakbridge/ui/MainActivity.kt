@@ -26,6 +26,7 @@ class MainActivity : ComponentActivity() {
             Manifest.permission.BLUETOOTH_SCAN,
             Manifest.permission.BLUETOOTH_ADVERTISE,
             Manifest.permission.POST_NOTIFICATIONS,
+            Manifest.permission.ACTIVITY_RECOGNITION,
         )
     private var permissionRevision by mutableIntStateOf(0)
     private var pendingAction: Pair<String, String?>? = null

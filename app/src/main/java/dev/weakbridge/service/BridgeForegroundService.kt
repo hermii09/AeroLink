@@ -31,6 +31,7 @@ class BridgeForegroundService : Service() {
     private lateinit var media: MediaSessionBridge
     private var ancs: AncsClient? = null
     private var ams: AmsClient? = null
+    private var healthSync: HealthStepSync? = null
     private var mediaCollector: Job? = null
     private var retry: Job? = null
     private var stable: Job? = null
@@ -94,7 +95,7 @@ class BridgeForegroundService : Service() {
             1,
             NotificationCompat.Builder(this, "bridge")
                 .setSmallIcon(R.drawable.ic_bridge)
-                .setContentTitle("WeakBridge")
+                .setContentTitle("AeroLink")
                 .setContentText(getString(R.string.core_foreground))
                 .setContentIntent(open)
                 .setOngoing(true)
@@ -326,6 +327,7 @@ class BridgeForegroundService : Service() {
         val hasAms =
             app.settings.media &&
                 listOf(Ams.COMMAND, Ams.UPDATE).all { transport.has(Ams.SERVICE, it) }
+        val hasHealth = transport.has(HealthStepSync.SERVICE, HealthStepSync.READING)
         status(ConnectionState.SUBSCRIBING, getString(R.string.core_subscribing))
         if (hasAncs) {
             ancs =
@@ -354,6 +356,9 @@ class BridgeForegroundService : Service() {
             ams = AmsClient(scope, transport, { lost(-6) })
             mediaCollector = scope.launch { ams?.state?.collect { media.update(it) } }
             ams!!.start()
+        }
+        if (hasHealth) {
+            healthSync = HealthStepSync(this, scope, transport).also { it.start() }
         }
         connection.idle(app.settings.lowPower)
         status(
@@ -405,6 +410,8 @@ class BridgeForegroundService : Service() {
         ancs = null
         ams?.close()
         ams = null
+        healthSync?.stop()
+        healthSync = null
         notifications.clear()
         media.update(MediaState())
     }
